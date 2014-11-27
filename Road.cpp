@@ -1,66 +1,116 @@
 #pragma
-using namespace std;
 
+#include "stdafx.h"
 #include "Road.h"
 #include <iostream>
+#include <fstream>
+#include <string>
 
 
+using namespace std;
 Road::Road(void)
 {
-	float density;
 
-	cout<<"Enter the number of lanes : ";
-	cin>>num_lanes;
+	ifstream Fin("road.txt");
+	string line;
+	while(getline(Fin,line)) /*need num of positions of each lane and generate lanes according to that*/
+	{
+		lanes[num_lanes++] = new Lane(this,line.length());
+		for(size_t pos = 0, len = line.length(); pos<len ; pos++)
+			if(line[pos] == '*')
+				num_vehicles++;
+	}
+	Fin.close();
 
-	cout<<"Enter the density of vehicles on road (0-1): ";
-	cin>>density;
-	num_vehicles = density*num_lanes*100;
-	vehicles = new Vehicle *[num_vehicles];
-	for(int i=0; i<num_vehicles; i++)
-		vehicles[i] = NULL;
- 
 	cout<<"Enter the speed limit for this road : ";
 	cin>>max_vel;
+	cout<<"Enter the traffic condition between (1 - 10) 1 - light traffic  10 -jammed ";
+	cin>>traffic_condition;
+	traffic_condition *= 10;
 
-	lanes = new Lane *[num_lanes];
-	for(int i=0; i<num_lanes; i++)
-		lanes[i] = new Lane(max_vel);
+	for(int i=0; i<num_vehicles; i++)
+		vehicles[i] = NULL;
+
 }
 
 
 Road::~Road(void)
 {
-	delete[] lanes;
-	/*for(int i =0; i<num_vehicles; i++)
+	for(size_t lane=0, len=lanes.size(); lane<len; lane++)
+		delete lanes[lane];
+	for(size_t vehicle=0, len=vehicles.size(); vehicle<len; vehicle++)
+		delete vehicles[vehicle];
+}
+
+void Road::generateInitialState() // generate accoring to the traffic condition - need not
+{
+	int curVh = 0;
+
+	for(int j=0; j<num_vehicles; j++)
 	{
-		if(vehicles[i] != NULL)
-			delete vehicles[i];
-	}*/
-	delete[] vehicles;
+		int lane, pos;
+		Vehicle *vh;
+
+		/*Choose a lane for putting the vehicle*/
+		lane = rand()%num_lanes; 
+		pos = rand()%50; //take the  length of each lane here
+		while(lanes[lane]->isOccupied(pos))
+			pos = rand()%50;
+		
+		vh = new Vehicle(lanes[lane], pos); 
+		vehicles[curVh++] = vh;
+	}
+}
+
+void Road::clearTraffic()
+{
+	for(int i=0;i<num_lanes;i++)
+		lanes[i] ->clearTraffic();
+}
+
+void Road::deleteVehicle(int vehicle_id)
+{
+	vehicles.erase(vehicles.begin()+vehicle_id);
+	num_vehicles-- ;
 }
 
 void Road::generateTraffic()
 {
-	int curVh = 0;
-
-	for(int j=0; j<5; j++)
+	/*clear everything and start again*/
+	clearTraffic();
+	generateInitialState();
+	
+	for(int i=0;i<100;i++)
 	{
-		int lane;
-		Vehicle *vh;
-
-		/*Choose a lane for putting the vehicle*/
-		lane = rand()%num_lanes;
-		vh = new Vehicle(lanes[lane], 0);
-		vehicles[curVh++] = vh;
-
-		for(int i=0; i<num_lanes; i++)
-			lanes[i]->dumpLane();
 		updateTraffic();
 	}
+	for(int i=0; i<num_lanes; i++)
+		lanes[i]->dumpLane();
 }
 
+int Road::getMaxVel()
+{
+	return max_vel;
+}
+
+void Road::addNewVehicle(int lane)
+{
+	bool isAdded = lanes[lane]->addNewVehicle();
+	if(isAdded)		
+		vehicles[num_vehicles++] = new Vehicle(lanes[lane],0);
+}
 void Road::updateTraffic()
 {
+	/*generate new vehicles according to the traffic condition*/
+	for(int i=0; i<num_lanes; i++)
+	{
+		bool shouldAddVehicle = rand()%100 < traffic_condition ;
+		if(shouldAddVehicle)
+			lanes[i]->add2Queue();
+		addNewVehicle(i);
+	}
+
+	/*update vehicle velocity*/
 	for(int i=0; i<num_vehicles; i++)
 	{
 		if(vehicles[i] != NULL)
@@ -68,6 +118,8 @@ void Road::updateTraffic()
 			vehicles[i]->updateVelocity();
 		}
 	}
+
+	/*update vehicle position*/
 	for(int i=0; i<num_vehicles; i++)
 	{
 		if(vehicles[i] != NULL)

@@ -1,12 +1,14 @@
+#include "stdafx.h"
 #include "Vehicle.h"
 
+using namespace std;
 
-Vehicle::Vehicle(Lane *_lane, int _pos)
+Vehicle::Vehicle(Lane* _lane, int _pos)
 {
 	vehicle_id = ++vehicle_id_gen;
 	lane = _lane;
 	pos = _pos;
-	velocity = 1;
+	velocity = 0;
 	lane->addVehicle(pos, velocity);
 }
 
@@ -24,7 +26,12 @@ int Vehicle::getVehicleId()
 void Vehicle::updatePosition()
 {
 	lane->removeVehicle(pos);
-	pos = pos + velocity;
+	pos = lane->getNextPosition(pos,velocity);
+	if(pos > lane->getLength())
+	{
+		lane->deleteVehicle(vehicle_id);
+		return;
+	}
 	lane->addVehicle(pos, velocity);
 }
 
@@ -35,4 +42,7 @@ void Vehicle::updateVelocity()
 		velocity = slowVel;
 	else if(lane->canAccelerate(pos, velocity) == 1)
 		velocity++;
+
+	if(velocity!=0 && velocity!=-1 && rand()%100<25)
+		velocity--;
 }

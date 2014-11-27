@@ -1,19 +1,19 @@
-#pragma
-using namespace std;
+
 
 #include<iostream>
+#include "stdafx.h"
 #include "Lane.h"
+#include "Road.h"
 
-
-Lane::Lane(int _max_vel)
+using namespace std;
+Lane::Lane(Road* _road, size_t _max_sites)
 {
-	max_sites = 100;
+	max_sites = _max_sites;
+	road = _road;
 	sites = new int[max_sites];
 	for(int i=0; i<max_sites; i++)
 		sites[i] = -1;
-	max_vel = _max_vel;
 }
-
 
 Lane::~Lane(void)
 {
@@ -32,22 +32,59 @@ void Lane::dumpLane()
 	cout<<"\n";
 }
 
+void Lane::deleteVehicle(int vehicle_id)
+{
+	road->deleteVehicle(vehicle_id);
+}
+
 int Lane::isOccupied(int pos)
 {
 	if(sites[pos] == -1)
-		return 1;
-	else
 		return 0;
+	else
+		return 1;
+}
+
+void Lane::clearTraffic()
+{
+	for(int i=0;i<max_sites;i++)
+		sites[i] = -1;
+}
+
+void Lane::add2Queue()
+{
+	vehicle_queue++;
+}
+
+bool Lane::addNewVehicle()
+{
+	if(vehicle_queue && !isOccupied(0))
+	{
+		addVehicle(0,0);
+		vehicle_queue--;
+		return true;
+	}
+	return false;
 }
 
 void Lane::addVehicle(int pos, int vel)
 {
-		sites[pos] = vel;
+	sites[pos] = vel;
 }
 
 void Lane::removeVehicle(int pos)
 {
 	sites[pos] = -1;
+}
+
+int Lane::getLength()
+{
+	return max_sites;
+}
+
+int Lane::getNextPosition(int pos,int vel)
+{
+	return (pos+vel);
 }
 
 int Lane::shouldSlowDown(int pos, int vel)
@@ -60,7 +97,7 @@ int Lane::shouldSlowDown(int pos, int vel)
 
 int Lane::canAccelerate(int pos, int vel)
 {
-	if(vel == max_vel)
+	if(vel == road->getMaxVel() )
 		return 0;
 	if(sites[pos+vel+1] == -1)
 		return 1;
