@@ -16,7 +16,7 @@ class Road
 
 
 public:
-	Road(int argc, char** argv);
+	Road();
 	~Road(void);
 	void generateTraffic();
 	int  getMaxVel();

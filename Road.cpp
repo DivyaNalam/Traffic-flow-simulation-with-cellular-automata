@@ -1,30 +1,34 @@
 #pragma
 
-#define GLUT_DISABLE_ATEXIT_HACK
+//#define GLUT_DISABLE_ATEXIT_HACK
 
+#include "stdafx.h"
 #include "Road.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <process.h>
 #include <Windows.h>
-#include <gl\GL.h>
+
+/*#include <gl\GL.h>
 #include <gl\GLU.h>
-#include <gl\glut.h>
+#include <gl\glut.h>*/
 
 Road *curRoad;
 int canSleep = 1;
 
 using namespace std;
-Road::Road(int argc, char **argv)
+Road::Road()
 {
-	ifstream Fin("C:\\Users\\Divya\\Documents\\Self organization\\Cellular Automata\\GitCellularAutomata\\road.txt");
+	//ifstream Fin("C:\\Users\\Divya\\Documents\\Self organization\\Cellular Automata\\GitCellularAutomata\\road.txt");
+	ifstream Fin("road.txt");
 	string line;
 	if(!Fin)
 	{
 		cout<<"provide input file road.txt";
 		return;
 	}
+
 	num_lanes = num_vehicles = 0;
 	while(getline(Fin,line)) 
 	{
@@ -51,10 +55,9 @@ Road::Road(int argc, char **argv)
 	::curRoad = this;
 	::canSleep = 1;
 	
-	_beginthread(waitingThread, 0, (void *)*argv);
+//	_beginthread(waitingThread, 0, (void *)*argv);
 	
 }
-
 
 Road::~Road(void)
 {
@@ -92,7 +95,7 @@ void Road::clearTraffic()
 
 void Road::deleteVehicle(int vehicle_id)
 {
-	vehicles.erase(vehicles.begin()+vehicle_id);
+	vehicles.erase(vehicles.begin()+(vehicle_id-vehicles[0]->getVehicleId()));
 	num_vehicles-- ;
 }
 
@@ -105,18 +108,16 @@ void Road::generateTraffic()
 	for(int i=0; i<num_lanes; i++)
 		lanes[i]->dumpLane(); 
 
-
-	for(int i=0;i<2;i++)
+	for(int i=0;i<100;i++)
 	{
+		if(num_vehicles <= 0) 
+			break;
 		updateTraffic();
 		for(int i=0; i<num_lanes; i++)
-		lanes[i]->dumpLane();
+			lanes[i]->dumpLane();
 		Sleep(1000);
         ::canSleep = 0;  
-
 	}
-	for(int i=0; i<num_lanes; i++)
-		lanes[i]->dumpLane();
 }
 
 int Road::getMaxVel()
@@ -128,20 +129,14 @@ void Road::addNewVehicle(int lane, int pos, int vel)
 {
 	bool isAdded = lanes[lane]->addVehicle(pos,vel);
 	if(isAdded)		
+	{
 		vehicles.push_back(new Vehicle(lanes[lane],pos));
-	num_vehicles++; 
+		num_vehicles++; 
+	}
 }
 void Road::updateTraffic()
 {
-	/*generate new vehicles according to the traffic condition*/
-	for(int i=0; i<num_lanes; i++)
-	{
-		bool shouldAddVehicle = rand()%100 < traffic_condition ;
-		if(shouldAddVehicle)
-			lanes[i]->add2Queue();
-		addNewVehicle(i,0,0);
-	}
-
+	
 	/*update vehicle velocity*/
 	for(int i=0; i<num_vehicles; i++)
 	{
@@ -159,8 +154,18 @@ void Road::updateTraffic()
 			vehicles[i]->updatePosition();
 		}	
 	}
+	/*generate new vehicles according to the traffic condition*/
+	for(int i=0; i<num_lanes; i++)
+	{
+		bool shouldAddVehicle = (rand()%100 < traffic_condition) ;
+		if(shouldAddVehicle)
+			lanes[i]->add2Queue();
+		addNewVehicle(i,0,0);
+	}
+
 }
 
+#ifdef LINDA
 void Road::waitingThread(void *argv)
 {
     int argc =1;
@@ -257,3 +262,4 @@ void Road::displayRoad()
 
     glFlush();  
 }
+#endif

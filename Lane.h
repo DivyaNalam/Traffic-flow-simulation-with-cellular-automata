@@ -17,7 +17,7 @@ public:
 	void add2Queue();
 	int getLength();
 	void addSideRoad(int pos);
-	void deleteVehicle(int vehicle_id);
+	void deleteVehicle(int vehicle_id, int pos);
 	void removeVehicle(int pos);
 	int canAccelerate(int pos, int vel);
 	int shouldSlowDown(int pos, int vel);

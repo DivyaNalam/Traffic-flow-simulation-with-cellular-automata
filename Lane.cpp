@@ -1,8 +1,9 @@
 
-
+#include "stdafx.h"
 #include<iostream>
 #include "Lane.h"
 #include "Road.h"
+
 
 using namespace std;
 Lane::Lane(Road* _road, size_t _max_sites)
@@ -10,6 +11,7 @@ Lane::Lane(Road* _road, size_t _max_sites)
 	max_sites = _max_sites;
 	road = _road;
 	sites = new int[max_sites];
+	vehicle_queue = 0;
 	for(int i=0; i<max_sites; i++)
 		sites[i] = -1;
 }
@@ -36,8 +38,9 @@ void Lane::dumpLane()
 	cout<<"\n";
 }
 
-void Lane::deleteVehicle(int vehicle_id)
+void Lane::deleteVehicle(int vehicle_id, int pos)
 {
+	removeVehicle(pos);
 	road->deleteVehicle(vehicle_id);
 }
 
@@ -101,14 +104,14 @@ int Lane::shouldSlowDown(int pos, int vel)
 
 int Lane::canAccelerate(int pos, int vel)
 {
-	if(vel == road->getMaxVel() )
+	if(vel == road->getMaxVel())
 		return 0;
-	if(pos+vel+1 >= max_sites)
-		return 0;
-	if(sites[pos+vel+1] == -1)
+	if(pos+vel+1 >= max_sites) /*vehicles go out of lane bound. Let it accelarate . Delete the vehicle in updatePosition() */
+		return 1;
+	if(!isOccupied(pos+vel+1))
 		return 1;
 	else 
-		return -1;
+		return 0;
 }
 
 int Lane::getMaxSites()
