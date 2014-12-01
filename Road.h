@@ -19,6 +19,6 @@ public:
 	void deleteVehicle(int vehicle_id);
 	void generateInitialState();
 	void clearTraffic();
-	void addNewVehicle(int lane);
+	void addNewVehicle(int lane, int pos, int vel);
 };
 

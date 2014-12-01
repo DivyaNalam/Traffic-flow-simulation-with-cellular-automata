@@ -15,6 +15,11 @@ Lane::Lane(Road* _road, size_t _max_sites)
 		sites[i] = -1;
 }
 
+void Lane::addSideRoad(int pos)
+{
+	side_roads.push_back(pos);
+}
+
 Lane::~Lane(void)
 {
 	delete[] sites;
@@ -56,20 +61,20 @@ void Lane::add2Queue()
 	vehicle_queue++;
 }
 
-bool Lane::addNewVehicle()
+bool Lane::addVehicle(int pos, int vel)
 {
-	if(vehicle_queue && !isOccupied(0))
+	if(pos != 0 && !isOccupied(pos))
 	{
-		addVehicle(0,0);
+		sites[pos] = vel;
+		return true;
+	}
+	if(pos == 0 && vehicle_queue && !isOccupied(0))
+	{
+		sites[0] = 0;
 		vehicle_queue--;
 		return true;
 	}
 	return false;
-}
-
-void Lane::addVehicle(int pos, int vel)
-{
-	sites[pos] = vel;
 }
 
 void Lane::removeVehicle(int pos)

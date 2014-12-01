@@ -13,12 +13,20 @@ Road::Road(void)
 
 	ifstream Fin("road.txt");
 	string line;
-	while(getline(Fin,line)) /*need num of positions of each lane and generate lanes according to that*/
+	while(getline(Fin,line)) 
 	{
-		lanes[num_lanes++] = new Lane(this,line.length());
+		vector<int> side_roads;
+		lanes[num_lanes] = new Lane(this,line.length());
 		for(size_t pos = 0, len = line.length(); pos<len ; pos++)
+		{
 			if(line[pos] == '*')
-				num_vehicles++;
+			{	
+				addNewVehicle(num_lanes,pos,0);
+			}
+			if(line[pos] == 'S')
+				lanes[num_lanes]->addSideRoad(pos);
+		}
+		num_lanes++;
 	}
 	Fin.close();
 
@@ -30,7 +38,6 @@ Road::Road(void)
 
 	for(int i=0; i<num_vehicles; i++)
 		vehicles[i] = NULL;
-
 }
 
 
@@ -93,11 +100,11 @@ int Road::getMaxVel()
 	return max_vel;
 }
 
-void Road::addNewVehicle(int lane)
+void Road::addNewVehicle(int lane, int pos, int vel)
 {
-	bool isAdded = lanes[lane]->addNewVehicle();
+	bool isAdded = lanes[lane]->addVehicle(pos,vel);
 	if(isAdded)		
-		vehicles[num_vehicles++] = new Vehicle(lanes[lane],0);
+		vehicles[num_vehicles++] = new Vehicle(lanes[lane],pos);
 }
 void Road::updateTraffic()
 {
@@ -107,7 +114,7 @@ void Road::updateTraffic()
 		bool shouldAddVehicle = rand()%100 < traffic_condition ;
 		if(shouldAddVehicle)
 			lanes[i]->add2Queue();
-		addNewVehicle(i);
+		addNewVehicle(i,0,0);
 	}
 
 	/*update vehicle velocity*/
