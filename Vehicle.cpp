@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Vehicle.h"
 
 using namespace std;

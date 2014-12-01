@@ -23,5 +23,6 @@ public:
 	int shouldSlowDown(int pos, int vel);
 	int getNextPosition(int pos,int vel);
 	void clearTraffic();
+	int getMaxSites();
 };
 

@@ -1,7 +1,6 @@
 
 
 #include<iostream>
-#include "stdafx.h"
 #include "Lane.h"
 #include "Road.h"
 
@@ -94,7 +93,7 @@ int Lane::getNextPosition(int pos,int vel)
 
 int Lane::shouldSlowDown(int pos, int vel)
 {
-	for(int i=pos+1; i<=pos+vel; i++)
+	for(int i=pos+1; i<=pos+vel && i<max_sites; i++)
 		if(sites[i] != -1)
 			return i-pos;
 	return -1;
@@ -104,8 +103,15 @@ int Lane::canAccelerate(int pos, int vel)
 {
 	if(vel == road->getMaxVel() )
 		return 0;
+	if(pos+vel+1 >= max_sites)
+		return 0;
 	if(sites[pos+vel+1] == -1)
 		return 1;
 	else 
 		return -1;
+}
+
+int Lane::getMaxSites()
+{
+	return max_sites;
 }

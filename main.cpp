@@ -7,9 +7,9 @@ using namespace std;
 #include "Vehicle.h"
 
 int Vehicle::vehicle_id_gen = 0;
-int main()
+int main(int argc, char **argv)
 {	
-	class Road rd;
+	class Road rd(argc, argv);
 
 	rd.generateTraffic();
 	_getch();

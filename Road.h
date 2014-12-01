@@ -9,9 +9,14 @@ class Road
 	int num_lanes, max_vel, num_vehicles, traffic_condition;
 	std::vector <Lane*> lanes;
 	std::vector <Vehicle*> vehicles; 
+    void displayRoad();
+    static void staticDisplayRoad();
+    static void waitingThread(void *);
+    static void staticDisplayTrigger(int);
+
 
 public:
-	Road(void);
+	Road(int argc, char** argv);
 	~Road(void);
 	void generateTraffic();
 	int  getMaxVel();
