@@ -5,8 +5,7 @@
 LaneSite::LaneSite(void)
 {
 	speed = -1;
-	timeSteps = siteDensity = flowDensity = 0.0;
-
+	siteDensity = flowDensity = 0;
 }
 
 LaneSite::~LaneSite(void)
@@ -29,4 +28,25 @@ bool LaneSite::isOccupied()
 int LaneSite::getSpeed()
 {
 	return speed;
+}
+
+
+void LaneSite::incrementSiteDensity()
+{
+	siteDensity++;
+}
+
+void LaneSite::incrementFlowDensity()
+{
+	flowDensity++;
+}
+
+int LaneSite::getSiteDensity()
+{
+	return siteDensity;
+}
+
+int LaneSite::getFlowDensity()
+{
+	return flowDensity;
 }

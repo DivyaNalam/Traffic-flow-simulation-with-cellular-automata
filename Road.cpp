@@ -32,7 +32,7 @@ Road::Road()
 	num_lanes = num_vehicles = 0;
 	while(getline(Fin,line)) 
 	{
-		lanes.push_back(new Lane(this,line.length()));
+		lanes.push_back(new Lane(this,line.length(),num_lanes));
 		for(size_t pos = 0, len = line.length(); pos<len ; pos++)
 		{
 			if(line[pos] == '*')
@@ -106,6 +106,8 @@ void Road::deleteVehicle(int vehicle_id)
 
 void Road::generateTraffic()
 {
+	ofstream sdFile, fdFile;
+	int timeSteps = 100;
 	/*clear everything and start again*/
 	//clearTraffic();
 	//generateInitialState();
@@ -113,16 +115,33 @@ void Road::generateTraffic()
 	for(int i=0; i<num_lanes; i++)
 		lanes[i]->dumpLane(); 
 
-	for(int i=0;i<100;i++)
+	for(int i=0;i<timeSteps;i++)
 	{
-		if(num_vehicles <= 0) 
-			break;
 		updateTraffic();
 		for(int i=0; i<num_lanes; i++)
 			lanes[i]->dumpLane();
+		//dumpShiftingVehicles();
 		Sleep(1000);
         ::canSleep = 0;  
 	}
+
+	sdFile.open("siteDensityStats.csv", ios::out | ios::app);
+	fdFile.open("flowDensityStats.csv", ios::out | ios::app);
+	sdFile<<max_vel<<"	"<<traffic_condition<<"	";
+	fdFile<<max_vel<<"	"<<traffic_condition<<"	";
+	for(int l=0; l<num_lanes; l++)
+	{
+		for(int s=0; s<lanes[l]->getMaxSites(); s++)
+		{
+			sdFile<<(float)lanes[l]->getSiteDensity(s)/(float)timeSteps<<"	";
+			fdFile<<lanes[l]->getFlowDensity(s)<<"	";
+		}
+	}
+	sdFile<<"\n";
+	fdFile<<"\n";
+	sdFile.close();
+	fdFile.close();
+
 }
 
 int Road::getMaxVel()
@@ -152,12 +171,21 @@ void Road::updateTraffic()
 		}
 	}
 
+	//decideOnShift(); 
+
 	/*update vehicle position*/
 	for(int i=0; i<num_vehicles; i++)
 	{
 		if(vehicles[i] != NULL)
 		{
-			vehicles[i]->updatePosition();
+			if(vehicles[i]->getIndicator() == NONE)
+				vehicles[i]->updatePosition();
+			else if(vehicles[i]->getIndicator() == LEFT)
+			{
+				cout<<"abcda--------";
+				vehicles[i]->moveVehicle(lanes[vehicles[i]->getLane()->getLaneId()-1]);}
+			else
+			{cout<<"abcd";	vehicles[i]->moveVehicle(lanes[vehicles[i]->getLane()->getLaneId()+1]);}
 		}	
 	}
 	/*generate new vehicles according to the traffic condition*/
@@ -166,6 +194,81 @@ void Road::updateTraffic()
 		lanes[i]->newTrafficHandler(traffic_condition, i);
 	}
 
+}
+
+
+void Road::addShiftIntension(Vehicle *vh)
+{
+	shiftVehicles.insert(vh);
+}
+
+Vehicle* Road::fetchShiftVehicle()
+{
+	int selected = rand()%shiftVehicles.size(), i=0;
+	std::set<Vehicle *>::iterator it;
+	Vehicle* vh = NULL;
+	for (it=shiftVehicles.begin(); it!=shiftVehicles.end(); ++it)
+	{
+		if(i == selected)
+		{
+			vh = *it;
+			shiftVehicles.erase(it);
+			break;
+		}
+		i++;
+	}
+	return vh;
+}
+
+void Road::dumpShiftingVehicles()
+{
+	std::set<Vehicle *>::iterator it;
+
+	for (it=shiftVehicles.begin(); it!=shiftVehicles.end(); ++it)
+		cout<<(*it)->getVehicleId()<<" ";
+	cout<<"\n";
+}
+
+void Road::decideOnShift()
+{
+	while(!shiftVehicles.empty())
+	{
+		Vehicle *vh = fetchShiftVehicle(); 
+		Lane *lane = vh->getLane();
+		int laneId = lane->getLaneId(), leftLane = laneId-1, rightLane = laneId+1;
+		int vhPos = vh->getPos(), vhVel = vh->getVelocity();
+
+		/*Check left lane*/
+		if(leftLane>=0 && (lanes[leftLane]->getMaxSites() > vhPos ))
+		{
+			int intendedPos = (vhPos + vhVel +1 < lanes[leftLane]->getMaxSites()) ? vhPos+vhVel+1 : lanes[leftLane]->getMaxSites();
+			if( lanes[leftLane]->isShiftable(vhPos, intendedPos) &&	(leftLane == 0 || (leftLane !=0 && !lanes[leftLane-1]->checkIndicatingVehicle(vhPos, intendedPos, RIGHT))) )
+			{
+				vh->setIndicator(LEFT);
+			}
+		}
+		else if(rightLane<num_lanes && (lanes[rightLane]->getMaxSites() > vhPos))
+		{
+			int intendedPos = (vhPos + vhVel +1 < lanes[rightLane]->getMaxSites()) ? vhPos+vhVel+1 : lanes[rightLane]->getMaxSites();
+			if(lanes[rightLane]->isShiftable(vhPos, intendedPos) && (rightLane == num_lanes-1 || (rightLane !=0 && !lanes[rightLane+1]->checkIndicatingVehicle(vhPos, intendedPos, LEFT))))
+			{
+				vh->setIndicator(RIGHT);
+			}
+		}
+		else
+			vh->setIndicator(NONE);	
+	}
+}
+
+Vehicle *Road::fetchVehicle(Lane *lane, int pos)
+{
+	for( std::vector<Vehicle*>::const_iterator i = vehicles.begin(); i != vehicles.end(); ++i)
+	{
+		Vehicle *vh = *i;
+		if(vh->getLane()==lane && vh->getPos()==pos)
+			return vh;
+	}
+	return NULL;
 }
 
 #ifdef LINDA

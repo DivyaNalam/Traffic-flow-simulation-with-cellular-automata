@@ -7,15 +7,14 @@ class Road;
 
 class Lane
 {
-	int max_sites , vehicle_queue; 
+	int max_sites , vehicle_queue ,lane_id; 
 	LaneSite* sites;
 	std::vector<SideRoad*> side_roads;
 	Road* road;
 public:
-	Lane(Road*, size_t _max_sites);
+	Lane(Road*, size_t _max_sites, int);
 	~Lane(void);
 	void dumpLane();
-	void newTrafficHandler(int traffic_condition);
 	int isOccupied(int pos);
 	bool addVehicle(int pos, int vel);
 	bool findSideRoadIndex(int pos);
@@ -30,5 +29,13 @@ public:
 	void newTrafficHandler(int traffic_condition, int lane_id);
 	void clearTraffic();
 	int getMaxSites();
+	void incrementSiteDensity(int pos);
+	void incrementFlowDensity(int pos);
+	int getSiteDensity(int pos);
+	int getFlowDensity(int pos);
+	Road *getRoad();
+	int getLaneId();
+	bool isShiftable(int, int);
+	bool checkIndicatingVehicle(int, int, Indicators);
 };
 

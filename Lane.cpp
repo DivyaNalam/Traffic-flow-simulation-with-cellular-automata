@@ -7,13 +7,15 @@
 
 
 using namespace std;
-Lane::Lane(Road* _road, size_t _max_sites)
+Lane::Lane(Road* _road, size_t _max_sites, int _lane_id)
 {
 	max_sites = _max_sites;
 	road = _road;
 	sites = new LaneSite[max_sites];
 	vehicle_queue = 0;
+	lane_id = _lane_id;
 	addSideRoad(0);
+
 }
 
 void Lane::addSideRoad(int pos)
@@ -64,7 +66,7 @@ void Lane::add2Queue(int sideroad_id)
 void Lane::newTrafficHandler(int traffic_condition, int lane_id)
 {
 	bool shouldAddVehicle;
-	int side_road_probability = traffic_condition/50;
+	int side_road_probability = traffic_condition/2;
 	
 	/*check if new vehicle should be generated at the beginning of lane*/
 	shouldAddVehicle = (rand()%100 < traffic_condition) ;
@@ -124,7 +126,7 @@ int Lane::shouldSlowDown(int pos, int vel)
 {
 	for(int i=pos+1; i<=pos+vel && i<max_sites; i++)
 		if(isOccupied(i))
-			return i-pos;
+			return i-pos-1;
 	return -1;
 }
 
@@ -143,4 +145,60 @@ int Lane::canAccelerate(int pos, int vel)
 int Lane::getMaxSites()
 {
 	return max_sites;
+}
+
+
+void Lane::incrementSiteDensity(int pos)
+{
+	sites[pos].incrementSiteDensity();
+}
+
+void Lane::incrementFlowDensity(int pos)
+{
+	sites[pos].incrementFlowDensity();
+}
+
+int Lane::getSiteDensity(int pos)
+{
+	return sites[pos].getSiteDensity();
+}
+
+int Lane::getFlowDensity(int pos)
+{
+	return sites[pos].getFlowDensity();
+}
+
+Road* Lane::getRoad()
+{
+	return road;
+}
+
+int Lane::getLaneId()
+{
+	return lane_id;
+}
+
+bool Lane::isShiftable(int from, int to)
+{
+	/*Check for presence of vehicle in the same lane which can possibly come to "to" */
+	for(int i=from; i<=to; i++)
+	{
+		if(isOccupied(i))
+			return false;
+	}
+	return true;
+}
+
+bool Lane::checkIndicatingVehicle(int from, int to, Indicators indi)
+{
+	for(int i=from; i<=to; i++)
+	{
+		if(isOccupied(i)) 
+		{
+			Vehicle *vh = road->fetchVehicle(this, i);
+			if((vh != NULL) && (vh->getIndicator() == indi))
+				return true;
+		}
+	}
+	return false;
 }
