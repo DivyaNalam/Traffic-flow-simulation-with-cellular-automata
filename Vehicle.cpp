@@ -25,8 +25,10 @@ int Vehicle::getVehicleId()
 
 void Vehicle::updatePosition()
 {
-	lane->removeVehicle(pos);
 	int new_pos = lane->getNextPosition(pos,velocity);
+	if(pos == new_pos)
+		return;
+	lane->removeVehicle(pos);
 	if(new_pos >= lane->getLength())
 	{
 		lane->deleteVehicle(vehicle_id,pos);

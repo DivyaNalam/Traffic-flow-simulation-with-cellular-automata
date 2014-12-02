@@ -1,20 +1,25 @@
 #pragma once
 #include <vector>
+#include "LaneSite.h"
+#include "SideRoad.h"
 
 class Road;
 
 class Lane
 {
-	int max_sites, *sites , vehicle_queue; //Move max_velocity inside road
-	std::vector<int> side_roads;
+	int max_sites , vehicle_queue; 
+	LaneSite* sites;
+	std::vector<SideRoad*> side_roads;
 	Road* road;
 public:
 	Lane(Road*, size_t _max_sites);
 	~Lane(void);
 	void dumpLane();
+	void newTrafficHandler(int traffic_condition);
 	int isOccupied(int pos);
 	bool addVehicle(int pos, int vel);
-	void add2Queue();
+	bool findSideRoadIndex(int pos);
+	void add2Queue(int sideroad_id);
 	int getLength();
 	void addSideRoad(int pos);
 	void deleteVehicle(int vehicle_id, int pos);
@@ -22,6 +27,7 @@ public:
 	int canAccelerate(int pos, int vel);
 	int shouldSlowDown(int pos, int vel);
 	int getNextPosition(int pos,int vel);
+	void newTrafficHandler(int traffic_condition, int lane_id);
 	void clearTraffic();
 	int getMaxSites();
 };

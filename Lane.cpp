@@ -3,6 +3,7 @@
 #include<iostream>
 #include "Lane.h"
 #include "Road.h"
+#include "SideRoad.h"
 
 
 using namespace std;
@@ -10,15 +11,14 @@ Lane::Lane(Road* _road, size_t _max_sites)
 {
 	max_sites = _max_sites;
 	road = _road;
-	sites = new int[max_sites];
+	sites = new LaneSite[max_sites];
 	vehicle_queue = 0;
-	for(int i=0; i<max_sites; i++)
-		sites[i] = -1;
+	addSideRoad(0);
 }
 
 void Lane::addSideRoad(int pos)
 {
-	side_roads.push_back(pos);
+	side_roads.push_back(new SideRoad(pos,ENTRY));
 }
 
 Lane::~Lane(void)
@@ -30,10 +30,10 @@ void Lane::dumpLane()
 {
 	for(int i=0; i<max_sites; i++)
 	{
-		if(sites[i] == -1)
+		if(!isOccupied(i))
 			cout<<".";
 		else
-			cout<<sites[i];
+			cout<<sites[i].getSpeed();
 	}
 	cout<<"\n";
 }
@@ -46,34 +46,60 @@ void Lane::deleteVehicle(int vehicle_id, int pos)
 
 int Lane::isOccupied(int pos)
 {
-	if(sites[pos] == -1)
-		return 0;
-	else
-		return 1;
+	return sites[pos].isOccupied();
+
 }
 
 void Lane::clearTraffic()
 {
 	for(int i=0;i<max_sites;i++)
-		sites[i] = -1;
+		sites[i].updateSite(-1);
 }
 
-void Lane::add2Queue()
+void Lane::add2Queue(int sideroad_id)
 {
-	vehicle_queue++;
+	side_roads[sideroad_id]->add2Queue();
+}
+
+void Lane::newTrafficHandler(int traffic_condition, int lane_id)
+{
+	bool shouldAddVehicle;
+	int side_road_probability = traffic_condition/50;
+	
+	/*check if new vehicle should be generated at the beginning of lane*/
+	shouldAddVehicle = (rand()%100 < traffic_condition) ;
+	if(shouldAddVehicle)
+		add2Queue(0);
+
+	/*vehicle additions at each side road*/
+	for(int i=1; i<side_roads.size(); i++)
+	{
+		shouldAddVehicle = (rand()%100 < side_road_probability) ;
+		if(shouldAddVehicle)
+			add2Queue(i);
+	}
+
+	/*add the vehicles in their respective queues*/
+	for(int i=0; i<side_roads.size(); i++)
+	{
+		if(!side_roads[i]->isEmpty() && road->addNewVehicle(lane_id,side_roads[i]->getSite(),0))
+			side_roads[i]->removeFromQueue();
+	}
+
+}
+bool Lane::findSideRoadIndex(int pos)
+{
+	for(int i=0; i<side_roads.size(); i++)
+		if(side_roads[i]->getSite() == pos)
+			return i;
+	return -1;
 }
 
 bool Lane::addVehicle(int pos, int vel)
 {
-	if(pos != 0 && !isOccupied(pos))
+	if(!isOccupied(pos))
 	{
-		sites[pos] = vel;
-		return true;
-	}
-	if(pos == 0 && vehicle_queue && !isOccupied(0))
-	{
-		sites[0] = 0;
-		vehicle_queue--;
+		sites[pos].updateSite(vel);
 		return true;
 	}
 	return false;
@@ -81,7 +107,7 @@ bool Lane::addVehicle(int pos, int vel)
 
 void Lane::removeVehicle(int pos)
 {
-	sites[pos] = -1;
+	sites[pos].updateSite(-1);
 }
 
 int Lane::getLength()
@@ -97,7 +123,7 @@ int Lane::getNextPosition(int pos,int vel)
 int Lane::shouldSlowDown(int pos, int vel)
 {
 	for(int i=pos+1; i<=pos+vel && i<max_sites; i++)
-		if(sites[i] != -1)
+		if(isOccupied(i))
 			return i-pos;
 	return -1;
 }

@@ -95,8 +95,13 @@ void Road::clearTraffic()
 
 void Road::deleteVehicle(int vehicle_id)
 {
-	vehicles.erase(vehicles.begin()+(vehicle_id-vehicles[0]->getVehicleId()));
-	num_vehicles-- ;
+	for(std::vector<Vehicle*>::iterator it = vehicles.begin(); it!=vehicles.end(); it++)
+		if((*it)->getVehicleId() == vehicle_id)
+		{
+			vehicles.erase(it);
+			num_vehicles-- ;
+			break;
+		}
 }
 
 void Road::generateTraffic()
@@ -125,7 +130,7 @@ int Road::getMaxVel()
 	return max_vel;
 }
 
-void Road::addNewVehicle(int lane, int pos, int vel)
+bool Road::addNewVehicle(int lane, int pos, int vel)
 {
 	bool isAdded = lanes[lane]->addVehicle(pos,vel);
 	if(isAdded)		
@@ -133,6 +138,7 @@ void Road::addNewVehicle(int lane, int pos, int vel)
 		vehicles.push_back(new Vehicle(lanes[lane],pos));
 		num_vehicles++; 
 	}
+	return isAdded;
 }
 void Road::updateTraffic()
 {
@@ -157,10 +163,7 @@ void Road::updateTraffic()
 	/*generate new vehicles according to the traffic condition*/
 	for(int i=0; i<num_lanes; i++)
 	{
-		bool shouldAddVehicle = (rand()%100 < traffic_condition) ;
-		if(shouldAddVehicle)
-			lanes[i]->add2Queue();
-		addNewVehicle(i,0,0);
+		lanes[i]->newTrafficHandler(traffic_condition, i);
 	}
 
 }
