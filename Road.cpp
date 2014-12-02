@@ -2,17 +2,18 @@
 
 //#define GLUT_DISABLE_ATEXIT_HACK
 
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "Road.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <process.h>
 #include <Windows.h>
-
-/*#include <gl\GL.h>
+#ifdef LINDA
+#include <gl\GL.h>
 #include <gl\GLU.h>
-#include <gl\glut.h>*/
+#include <gl\glut.h>
+#endif
 
 Road *curRoad;
 int canSleep = 1;
@@ -20,8 +21,12 @@ int canSleep = 1;
 using namespace std;
 Road::Road()
 {
-	//ifstream Fin("C:\\Users\\Divya\\Documents\\Self organization\\Cellular Automata\\GitCellularAutomata\\road.txt");
+#ifdef LINDA
+	ifstream Fin("C:\\Users\\Divya\\Documents\\Self organization\\Cellular Automata\\GitCellularAutomata\\road.txt");
+#else
 	ifstream Fin("road.txt");
+#endif
+	char *argv[] = {{"ygtuy"}}; 
 	string line;
 	if(!Fin)
 	{
@@ -54,8 +59,10 @@ Road::Road()
 
 	::curRoad = this;
 	::canSleep = 1;
-	
-//	_beginthread(waitingThread, 0, (void *)*argv);
+
+#ifdef LINDA
+	_beginthread(waitingThread, 0, (void *)*argv);
+#endif
 	
 }
 
@@ -111,7 +118,7 @@ void Road::generateTraffic()
 	/*clear everything and start again*/
 	//clearTraffic();
 	//generateInitialState();
-	cout<<"First Dump\n";
+	//cout<<"First Dump\n";
 	for(int i=0; i<num_lanes; i++)
 		lanes[i]->dumpLane(); 
 
@@ -171,21 +178,24 @@ void Road::updateTraffic()
 		}
 	}
 
-	//decideOnShift(); 
+	decideOnShift(); 
 
 	/*update vehicle position*/
 	for(int i=0; i<num_vehicles; i++)
 	{
 		if(vehicles[i] != NULL)
 		{
+			int prev_pos = vehicles[i]->getPos();
+			Vehicle *vh = vehicles[i];
+			Lane *lane = vh->getLane();
 			if(vehicles[i]->getIndicator() == NONE)
 				vehicles[i]->updatePosition();
 			else if(vehicles[i]->getIndicator() == LEFT)
-			{
-				cout<<"abcda--------";
-				vehicles[i]->moveVehicle(lanes[vehicles[i]->getLane()->getLaneId()-1]);}
+			{   
+				vehicles[i]->moveVehicle(lanes[vehicles[i]->getLane()->getLaneId()-1]);
+			}
 			else
-			{cout<<"abcd";	vehicles[i]->moveVehicle(lanes[vehicles[i]->getLane()->getLaneId()+1]);}
+			{	vehicles[i]->moveVehicle(lanes[vehicles[i]->getLane()->getLaneId()+1]);}
 		}	
 	}
 	/*generate new vehicles according to the traffic condition*/
@@ -355,13 +365,19 @@ void Road::displayRoad()
                 glBegin(GL_POLYGON);
                     glColor3f(0.0f, 0.0f, 1.0f);
                     glVertex2f(x+xoffset,y+yoffset);
-                    glVertex2f(x+xoffset, y+0.1-yoffset);
-                    glVertex2f(x+site_size-xoffset, y+0.1-yoffset);
+                    glVertex2f(x+xoffset, y+0.05-yoffset);
+                    glVertex2f(x+site_size-xoffset, y+0.05-yoffset);
                     glVertex2f(x+site_size-xoffset, y+yoffset);
                 glEnd();
             }
             x = x+site_size;
         }
+		glBegin(GL_LINES);              
+                glColor3f(1.0f, 0.0f, 0.0f); 
+                glLineWidth(10.0);
+                glVertex2f(x, y);    
+                glVertex2f(x, y+0.05);
+            glEnd();
         y = y + 0.1;
     }
 

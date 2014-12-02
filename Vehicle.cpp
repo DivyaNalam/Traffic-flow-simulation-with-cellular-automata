@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "Vehicle.h"
 #include "Road.h"
 using namespace std;
@@ -65,6 +65,9 @@ void Vehicle::moveVehicle(Lane *dstLane)
 		lane->removeVehicle(pos);
 		dstLane->addVehicle(to, velocity+1);
 		setIndicator(NONE);
+		velocity = velocity +1;
+		lane = dstLane;
+		pos = to;
 	}
 }
 
